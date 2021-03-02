@@ -4,16 +4,14 @@ Created on Tue Mar  2 13:22:32 2021
 
 @author: compute
 """
-
-#first the list of challenger players
-#Then calculate their role
-#get top champions
 import cassiopeia as cass
 import roleml
 
 from datetime import timedelta
 import time
 import json
+from collections import Counter
+
 
 def getAPI_key():
     f = open("../api_key.txt", "r")
@@ -21,14 +19,17 @@ def getAPI_key():
 
 def analyzeMatch(match,summoner):
     p = match.participants[summoner]
-    roleml.change_role_formatting('full')
     
+    roleml.change_role_formatting('full')
     match.timeline.load()
     roleml.predict(match.to_dict(), match.timeline.to_dict(), True)
     roleml.add_cass_predicted_roles(match) 
     role= p.predicted_role  
     
-    print(role)
+    # role= p.role.value
+    champ= champList[str(p.champion.id)]
+    
+    return role, champ
     
 def get_challenger_data():
     data= cass.get_challenger_league(cass.Queue.ranked_solo_fives) #get the challenger data
@@ -37,20 +38,16 @@ def get_challenger_data():
     role_dict= []
     champ_dict= []
     for item in data.entries:
-        summonerNames.append(item.summoner.name)
-        
         if data.entries.index(item) %10 ==0:
             #print every 10 entries to update user
             print('\nCURRENT LADDER ENTRY= ', data.entries.index(item))
         
-        elif data.entries.index(item) ==2:
-            break
-        
+        summonerNames.append(item.summoner.name)
         summoner= item.summoner
         match_history = summoner.match_history(queues={cass.Queue.ranked_solo_fives}, 
-                                            begin_index=0, end_index=4)
+                                            begin_index=0, end_index=19)
         roles= []
-        champions= []
+        champs= []
         for match in match_history:
             if match.is_remake:
                 pass
@@ -60,7 +57,23 @@ def get_challenger_data():
             else:
                 #now we want the role [top, mid, jg, adc, support] and champion
                 #keep track of each one per match to find most common
-                analyzeMatch(match,summoner)
+                role, champ= analyzeMatch(match,summoner)
+                roles.append(role)
+                champs.append(champ)
+
+        main_role= Counter(roles).most_common(1)[0]
+        main_champ= Counter(champs).most_common(1)[0]
+        role_dict.append(main_role)
+        champ_dict.append(main_champ)
+        
+    return summonerNames, role_dict, champ_dict
+
+def write_output(summonerNames, role_dict, champ_dict):
+    #summoner name, (role, games), (champ, games)
+    print("\nSummoner name, (Role, games), (Champ, games)")
+    for i in range(0,len(summonerNames)):
+        print(summonerNames[i],"//", role_dict[i], "//", champ_dict[i])
+
     
 #%% Main run                 
 if __name__ == "__main__":
@@ -74,6 +87,7 @@ if __name__ == "__main__":
         champList= champList['keys']
     
     
-    get_challenger_data()
+    summonerNames, role_dict, champ_dict= get_challenger_data()
+    write_output(summonerNames, role_dict, champ_dict)
     
     print("\n--- %s seconds ---" % (time.time() - start_time))
