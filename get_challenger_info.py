@@ -21,6 +21,7 @@ def analyzeMatch(match,summoner):
     p = match.participants[summoner]
     
     roleml.change_role_formatting('full')
+    #fix this via "conda install -c conda-forge geos=3.7.1"
     match.timeline.load()
     roleml.predict(match.to_dict(), match.timeline.to_dict(), True)
     roleml.add_cass_predicted_roles(match) 
@@ -81,7 +82,7 @@ if __name__ == "__main__":
     cass.set_riot_api_key(getAPI_key()) #or replace with your own api key
     cass.set_default_region("NA") #or replace with another region
     
-    with open('../championFull.json', 'r') as champList_file:
+    with open('championFull.json', 'r') as champList_file:
         champList = json.load(champList_file)
         champList_file.close()
         champList= champList['keys']
