@@ -81,7 +81,7 @@ if __name__ == "__main__":
     cass.set_riot_api_key(getAPI_key()) #or replace with your own api key
     cass.set_default_region("NA") #or replace with another region
     
-    with open('championFull.json', 'r') as champList_file:
+    with open('../championFull.json', 'r') as champList_file:
         champList = json.load(champList_file)
         champList_file.close()
         champList= champList['keys']
