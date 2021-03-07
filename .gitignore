@@ -2,6 +2,7 @@
 __pycache__/
 *.py[cod]
 *$py.class
+get_challenger_info_template.py
 
 # C extensions
 *.so
